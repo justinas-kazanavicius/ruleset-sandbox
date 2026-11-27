@@ -1,0 +1,35 @@
+name: bot-pr
+
+on:
+  workflow_dispatch:
+    inputs:
+      path:
+        description: File to change
+        required: true
+      branch:
+        description: Branch name
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  open-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Open a PR authored by the Actions bot
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FILE: ${{ inputs.path }}
+          BRANCH: ${{ inputs.branch }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          echo "# bot change $BRANCH" >> "$FILE"
+          git add "$FILE"
+          git commit -m "bot change to $FILE"
+          git push origin "$BRANCH"
+          gh pr create --head "$BRANCH" --base main --title "bot: $FILE" --body "opened by the Actions bot"
